@@ -5,7 +5,7 @@ import os
 from PIL import Image
 from torchvision import transforms
 
-dev = torch.device("mps")
+dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 def load_data(start=0, end=2001):
     files = os.listdir("circle_images")
