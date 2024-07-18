@@ -1,6 +1,8 @@
 import torch
+from torch._prims_common import reduction_dims
 import torch.nn.functional as F
 import torch.nn as nn
+from torch import optim
 import os
 from PIL import Image
 from torchvision import transforms
@@ -36,20 +38,57 @@ class Encoder(nn.Module):
         self.l4 = nn.Linear(output_size, output_size)
 
     def forward(self, xb):
-        print(xb.shape)
         xb = F.relu(self.l1(xb))
-        print(xb.shape)
         xb = F.relu(self.l2(xb))
-        print(xb.shape)
         xb = F.relu(self.l3(xb))
-        print(xb.shape)
         xb = F.relu(self.l4(xb))
-        print(xb.shape)
+        return xb
+
+class Decoder(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(Decoder, self).__init__()
+        step_size = (output_size - input_size)//2
+        self.l1 = nn.Linear(input_size, input_size)
+        self.l2 = nn.Linear(input_size, input_size + step_size)
+        self.l3 = nn.Linear(input_size + step_size, output_size)
+        self.l4 = nn.Linear(output_size, output_size)
+
+    def forward(self, xb):
+        xb = F.relu(self.l1(xb))
+        xb = F.relu(self.l2(xb))
+        xb = F.relu(self.l3(xb))
+        xb = F.relu(self.l4(xb))
         return xb
 
 
+class AutoEncoder(nn.Module):
+    def __init__(self, feature_size, latent_size):
+        super().__init__()
+        self.enc = Encoder(feature_size, latent_size)
+        self.dec = Decoder(latent_size, feature_size)
 
-images = load_data(0,10)
-encoder = Encoder(images.shape[-1],2)
-encoder.to(dev)
-encoder(images)
+    def forward(self, x):
+        return self.dec(self.enc(x))
+
+
+loss_fn = F.l1_loss
+
+epochs = 1
+batch_size = 50
+tmp_img = load_data(0,1)
+model = AutoEncoder(tmp_img.shape[-1], 2).to(dev)
+opt = optim.Adam(model.parameters())
+
+for epoch in range(epochs):
+    for i in range(2000//batch_size):
+        images = load_data(i*batch_size, (i+1)*batch_size)
+        images.to(dev)
+        pred = model(images)
+        loss = loss_fn(pred,images,reduction='sum')
+        print("Batch %d Loss %d",i,loss)
+        loss.backward()
+        opt.step()
+        opt.zero_grad()
+
+
+
