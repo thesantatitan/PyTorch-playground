@@ -95,6 +95,16 @@ for epoch in range(epochs):
         opt.step()
         opt.zero_grad()
 
+
+
+        
 plt.scatter(loss_vals)
 plt.show()
 
+
+
+test_set = load_data(0, 2000)
+preds = model(test_set)
+preds.rehape(2000, 28, 28)
+accuracy = preds.eq(test_set).sum().item() / test_set.numel()
+print(accuracy)
