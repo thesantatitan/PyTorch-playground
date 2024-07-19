@@ -6,6 +6,8 @@ from torch import optim
 import os
 from PIL import Image
 from torchvision import transforms
+import plotext as plt
+
 
 dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -78,6 +80,8 @@ batch_size = 50
 tmp_img = load_data(0,1)
 model = AutoEncoder(tmp_img.shape[-1], 2).to(dev)
 opt = optim.Adam(model.parameters())
+loss_vals = []
+
 
 for epoch in range(epochs):
     for i in range(2000//batch_size):
@@ -85,10 +89,12 @@ for epoch in range(epochs):
         images.to(dev)
         pred = model(images)
         loss = loss_fn(pred,images,reduction='sum')
-        print("Batch %d Loss %d",i,loss)
+        print("Batch Loss",i,loss)
+        loss_vals.append(loss.item())
         loss.backward()
         opt.step()
         opt.zero_grad()
 
-
+plt.scatter(loss_vals)
+plt.show()
 
