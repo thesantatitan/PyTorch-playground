@@ -105,6 +105,6 @@ plt.show()
 
 test_set = load_data(0, 2000)
 preds = model(test_set)
-preds.reshape(2000, 28, 28)
+preds.reshape(2000, 128, 128)
 accuracy = preds[test_set==1.0].eq(test_set[test_set==1.0]).sum().item() / test_set.numel()
 print(accuracy)
